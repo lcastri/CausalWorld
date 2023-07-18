@@ -14,3 +14,5 @@ python/src/causal_world/baselines/model_free/trainers/__pycache__/
 python/src/causal_world/envs/robot/__pycache__/
 python/src/causal_world/tasks/__pycache__/
 python/src/causal_world/envs/scene/__pycache__/
+
+*.csv

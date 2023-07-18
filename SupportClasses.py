@@ -2,7 +2,7 @@ import math
 from enum import Enum
 
 
-class Finger(Enum):
+class FingerID(Enum):
     F1 = "60"
     F2 = "120"
     F3 = "300"
@@ -18,7 +18,7 @@ class Point3D():
         return [self.x, self.y, self.z]
 
 
-class FingerState():
+class Finger():
     def __init__(self, ID, hz, timeout=250):
         self.ID = ID
         self.pos = Point3D()
@@ -27,6 +27,7 @@ class FingerState():
         self.colour = None
         self.dt = 1/hz
         self.timeout = timeout
+        self.reset_value = timeout
         
     def set_pos(self, x, y, z):
         # Store old position 
@@ -51,7 +52,7 @@ class FingerState():
         self.timeout -= 1
         
     def reset_timeout(self):
-        self.timeout = 250
+        self.timeout = self.reset_value
     
     @property
     def dg(self):

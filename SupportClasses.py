@@ -76,3 +76,10 @@ class Finger():
         R, G, B = self.colour
         intensity = 0.2126 * R + 0.7152 * G + 0.0722 * B
         return intensity
+    
+    
+    def distance(self, p):
+        if self.pos.x is None or self.g.x is None:
+            return None
+        else:
+            return math.dist(self.pos.get_pos, p)

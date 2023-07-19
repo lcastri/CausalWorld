@@ -15,7 +15,8 @@ class BaseTask(object):
                  task_name,
                  variables_space,
                  fractional_reward_weight=1,
-                 dense_reward_weights=np.array([]),
+                 dense_reward_weights = np.array([100000,0, 0, 0]),
+                 default_goal_60 = np.array([0, 0, 0.10]),
                  activate_sparse_reward=False):
         """
         This class represents the base task generator which includes all the

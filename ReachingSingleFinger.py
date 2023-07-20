@@ -8,7 +8,7 @@ class ReachingSingleFinger(BaseTask):
     def __init__(self, variables_space='space_a_b',
                  fractional_reward_weight=1,
                  dense_reward_weights=np.array([100000,0, 0, 0]),
-                 default_goal_60=np.array([0, 0, 0.067]),
+                 default_goal_60=np.array([0, 0, 0.08]),
                  default_goal_120=np.array([0.1541, -0.2029, 0.46]),
                  default_goal_300=np.array([-0.2441, -0.2180,  0.4324]),
                  joint_positions=None,

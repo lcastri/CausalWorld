@@ -13,9 +13,9 @@ from ReachingSingleFinger import ReachingSingleFinger
 
 def change_stage_colour(env, v):
     R, G, B = STAGE_COLOUR
-    R = min(1, (1 - 0.5*v)*R)
-    G = min(1, (1 - 0.5*v)*G)
-    B = min(1, (1 - 0.5*v)*B)
+    R = min(1, 0.5*(v + 0.1)*R)
+    G = min(1, 0.5*(v + 0.1)*G)
+    B = min(1, 0.5*(v + 0.1)*B)
     colour = np.array([R, G, B])
     env.do_intervention({'stage_color' : colour})
     return np.sum(colour)
@@ -23,21 +23,20 @@ def change_stage_colour(env, v):
 
 def change_floor_colour(env, d):
     R, G, B = FLOOR_COLOUR
-    R = min(1, 1.5*(1 - d)*R)
-    G = min(1, 1.5*(1 - d)*G)
-    B = min(1, 1.5*(1 - d)*B)
+    R = min(1, (d + 0.4)*R)
+    G = min(1, (d + 0.4)*G)
+    B = min(1, (d + 0.4)*B)
     colour = np.array([R, G, B])
     env.do_intervention({'floor_color' : colour})
     return np.sum(colour)
 
 
-def change_box_colour(env, d):
+def change_box_colour(env, d, v):
     R, G, B = BOX_COLOUR
-    R = min(1, (1 - d)*R)
-    G = min(1, (1 - d)*G)
-    B = min(1, (1 - d)*B)
+    R = min(1, ((0.3*v) + (d + 0.6))*R)
+    G = min(1, ((0.3*v) + (d + 0.6))*G)
+    B = min(1, ((0.3*v) + (d + 0.6))*B)
     colour = np.array([R, G, B])
-    # colour = d * BOX_COLOUR + 0.75
     env.do_intervention({'tool_block' : {'color' : colour}})
     return np.sum(colour)
 
@@ -74,7 +73,7 @@ def extract_data(data):
     return goal_1, finger_pos_1
 
 
-def init():
+def init(intervention = False):
     robot = Finger(FingerID.F1, HZ, timeout=TIMEOUT)
     task = ReachingSingleFinger()
     env = CausalWorld(task = task,
@@ -93,26 +92,36 @@ def init():
     obs, _, _, info = env.step(control_policy(env, obs))
     robot.set_goal(g1[0], g1[1], g1[2]); robot.set_pos(f1[0], f1[1], f1[2])
     
-    Sc = change_stage_colour(env, 0)
-    Fc = change_floor_colour(env, robot.distance(BOX_GOAL_60))
-    Bc = change_box_colour(env, robot.distance(BOX_GOAL_60))
+    Sc = change_stage_colour(env, robot.v)
+    if not intervention:
+        Fc = change_floor_colour(env, robot.distance(BOX_GOAL_60))
+    else:
+        colour = np.array(FLOOR_INT_COLOUR)
+        env.do_intervention({'floor_color' : colour})
+        Fc = np.sum(colour)
+    Bc = change_box_colour(env, robot.distance(BOX_GOAL_60), robot.v)
     df.loc[0] = [Fc, Bc, Sc, robot.distance(BOX_GOAL_60), robot.v]
     df.loc[1] = [Fc, Bc, Sc, robot.distance(BOX_GOAL_60), robot.v]
     
     return env, robot, obs
 
     
-def run():
+def run(intervention = False):
     global IS_BOX_GOAL
     
     # Init Finger and Environment
-    env, F1, obs = init()
+    env, F1, obs = init(intervention)
     
     # Loop over time
     for t in range(2, T):
         Sc = change_stage_colour(env, df.loc[t-1]['v'])
-        Fc = change_floor_colour(env, df.loc[t-1]['d_b'])
-        Bc = change_box_colour(env, df.loc[t-2]['d_b'])
+        if not intervention: 
+            Fc = change_floor_colour(env, df.loc[t-1]['d_b'])
+        else:
+            colour = np.array(FLOOR_INT_COLOUR)
+            env.do_intervention({'floor_color' : colour})
+            Fc = np.sum(colour)        
+        Bc = change_box_colour(env, df.loc[t-2]['d_b'], df.loc[t-1]['v'])
         
         obs, _, _, info = env.step(control_policy(env, obs))
         
@@ -125,7 +134,8 @@ def run():
             F1.reset_timeout()
             
         F1.dec_timeout()
-        df.loc[t] += [Fc, Bc, Sc, F1.distance(BOX_GOAL_60), F1.v]
+        # df.loc[t] = [Fc, Bc, Sc, F1.distance(BOX_GOAL_60), F1.v]
+        df.loc[t] += [Fc - df.loc[t]["F_c"], Bc, Sc, F1.distance(BOX_GOAL_60), F1.v]
         
 
     env.close()
@@ -139,20 +149,33 @@ def hz_to_skipframe(hz):
 if __name__ == '__main__':
     STAGE_COLOUR = np.array([193, 205, 205])/255
     FLOOR_COLOUR = np.array([139, 115, 85])/255
+    FLOOR_INT_COLOUR = np.array([128, 128, 128])/255
     BOX_COLOUR = np.array([255, 0, 0])/255
-    BOX_GOAL_60 = [0, 0, 0.067]
+    BOX_GOAL_60 = [0, 0, 0.08]
+    # BOX_GOAL_60 = [0, 0, 0.067]
     FIX_POS_120 = [0.1541, -0.2029, 0.46]
     FIX_POS_300 = [-0.2441, -0.2180,  0.4324]
     HZ = 10
     THRES = 0.03 # [m]
-    TIMEOUT = 50
+    TIMEOUT = 20
     IS_BOX_GOAL = True
-    T = 1800
+    T = 1200
     
-    columns = ['F_c', 'S_c', 'B_c', 'd_b', 'v']
-    data = np.random.random(size = (T, len(columns)))
+    
+    columns = ['F_c', 'B_c', 'S_c', 'd_b', 'v']
+    data = np.random.uniform(low = -0.03, high = 0.03, size = (T, len(columns)))
     df = pd.DataFrame(data, columns = columns)
-    run()
+    run(intervention = False)
     
     df = df.iloc[2:]
-    df.to_csv("ReachingSingleFinger_obs.csv", index = False)
+    df.to_csv("ReachingSingleFinger_obs_noise0.03.csv", index = False)
+    
+    
+    columns = ['F_c', 'B_c', 'S_c', 'd_b', 'v']
+    data = np.random.uniform(low = -0.03, high = 0.03, size = (T, len(columns)))
+    df = pd.DataFrame(data, columns = columns)
+    run(intervention = True)
+    
+    df = df.iloc[2:]
+    df.to_csv("ReachingSingleFinger_int_noise0.03.csv", index = False)
+    

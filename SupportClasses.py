@@ -78,8 +78,8 @@ class Finger():
         return intensity
     
     
-    def distance(self, p):
+    def dist2D(self, p):
         if self.pos.x is None or self.g.x is None:
             return None
         else:
-            return math.dist(self.pos.get_pos, p)
+            return math.dist(self.pos.get_pos[0:2], p[0:2])

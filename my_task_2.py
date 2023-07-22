@@ -191,7 +191,7 @@ if __name__ == '__main__':
     run(intervention = False)
     
     df = df.iloc[2:]
-    df.to_csv("ReachingSingleFinger_obs_noise0.03.csv", index = False)
+    df.to_csv("ReachingSingleFinger_obs_noise" + str(NOISE[1]) + ".csv", index = False)
     
     
     columns = ['F_c', 'B_c', 'H', 'v']
@@ -200,5 +200,5 @@ if __name__ == '__main__':
     run(intervention = True)
     
     df = df.iloc[2:]
-    df.to_csv("ReachingSingleFinger_int_noise0.03.csv", index = False)
+    df.to_csv("ReachingSingleFinger_int_noise" + str(NOISE[1]) + ".csv", index = False)
     

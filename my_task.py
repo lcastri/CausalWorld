@@ -123,18 +123,18 @@ def init(intervention = False):
     return env, robot, obs
 
     
-def run(intervention = False):
+def run(Time, intervention = False):
     global IS_BOX_GOAL
     
     # Init Finger and Environment
     env, F1, obs = init(intervention)
     
     # Loop over time
-    for t in range(2, T):
+    for t in range(2, Time):
 
         Fc = change_floor_colour(env, df.loc[t-2]['H'])
         if not intervention: 
-            Bc = change_box_colour(env, df.loc[t-1]['H'], df.loc[t-1]['v'], df.loc[t-1]['d_b'])
+            Bc = change_box_colour(env, df.loc[t-1]['H'], df.loc[t-1]['v'], df.loc[t-1]['d_c'])
         else:
             colour = np.array(BOX_INT_COLOUR)
             env.do_intervention({'tool_block' : {'color' : colour}})
@@ -155,7 +155,7 @@ def run(intervention = False):
         if not intervention: 
             df.loc[t] += [Fc, Bc, F1.pos.z, F1.v, F1.dist2D(BOX_GOAL_60)]
         else:
-            df.loc[t] += [Fc, Bc - df.loc[t]["B_c"], F1.pos.z, F1.v, F1.dist2D(BOX_GOAL_60)]
+            df.loc[t] += [Fc, Bc - df.loc[t]["C_c"], F1.pos.z, F1.v, F1.dist2D(BOX_GOAL_60)]
         
 
     env.close()
@@ -181,7 +181,8 @@ if __name__ == '__main__':
     THRES = 0.03 # [m]
     TIMEOUT = 20
     IS_BOX_GOAL = True
-    T = 600
+    T = 1200
+    Tint = 1200
     MAX_HEIGHT = 0.30
     MAX_DIST = 0.20
     MAX_VEL = 1.50
@@ -189,19 +190,18 @@ if __name__ == '__main__':
     NOISE = (-0.15, 0.15)
 
     
-    columns = ['F_c', 'B_c', 'H', 'v', 'd_b']
+    columns = ['F_c', 'C_c', 'H', 'v', 'd_c']
     data = np.random.uniform(low = NOISE[0], high = NOISE[1], size = (T, 2))
     data = np.c_[data, np.random.uniform(low = -0.2, high = 0.2, size = (T, 1)), np.random.uniform(low = NOISE[0], high = NOISE[1], size = (T, 2))]
     df = pd.DataFrame(data, columns = columns)
-    run(intervention = False)
+    run(T, intervention = False)
     
     df = df.iloc[2:]
     df.to_csv("ReachingSingleFinger_obs_noise" + str(NOISE[1]) + ".csv", index = False)
     
-    columns = ['F_c', 'B_c', 'H', 'v', 'd_b']
-    data = np.random.uniform(low = NOISE[0], high = NOISE[1], size = (T, len(columns)))
+    data = np.random.uniform(low = NOISE[0], high = NOISE[1], size = (Tint, len(columns)))
     df = pd.DataFrame(data, columns = columns)
-    run(intervention = True)
+    run(Tint, intervention = True)
     
     df = df.iloc[2:]
     df.to_csv("ReachingSingleFinger_int_noise" + str(NOISE[1]) + ".csv", index = False)

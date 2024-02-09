@@ -94,7 +94,7 @@ def init(intervention = False):
     obs = env.reset()
     
     # Set the camera view
-    camera_distance = .5  # distance from the camera to the target (object you want to look at)
+    camera_distance = .75  # distance from the camera to the target (object you want to look at)
     camera_yaw = 0.0      # camera yaw angle in degrees (rotation around the vertical axis)
     camera_pitch = -60.0   # camera pitch angle in degrees (rotation around the horizontal axis)
     camera_target_position = [0, 0, 0]  # position of the target object you want to look at
